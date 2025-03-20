@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<style>
+    .hightlight{
+        background-color: yellow;
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+
+<body>
+
+    <div ng-app="MyApp" ng-controller="MyController">
+        <h1>Weather Forecast</h1>
+        <button ng-click="k= !k">Location</button>
+        <div ng-show="k">
+            <input type="text" ng-model="city" placeholder="Enter City Name">
+            <button ng-click="getWeather()">Get Weather</button>
+        </div>
+        <h1 ng-if="Totalweather.city">City Name - {{Totalweather.city.name}}</h1>
+        <h1>Date - {{c_date | date :'dd-MM-yyyy EEEE'}}</h1>
+        <br>
+        
+        <div ng-if="getClosestData()" class="current-weather">
+            
+
+
+
+            <h2>Current Weather (Closest Available)</h2>
+            <p><strong>Temperature:</strong> {{ getClosestData().main.temp }} °C</p>
+            <p><strong>Weather:</strong> {{ getClosestData().weather[0].description }}</p>
+            <p><strong>Humidity:</strong> {{ getClosestData().main.humidity }}%</p>
+            <p><strong>Wind Speed:</strong> {{ getClosestData().wind.speed }} m/s</p>
+        </div>
+
+        <h2>Today's Forecast</h2>
+        <div class="horizontal-scroll">
+            <div ng-repeat="entry in today_weather" ng-class="{'highlight': entry.dt_txt===closestWeather.dt_txt}" class="weather-card">
+                <p><strong>Time:</strong> {{ formatTime(entry.dt_txt) }}</p>
+                <p><strong>Temperature:</strong> {{ entry.main.temp }} °C</p>
+                <p><strong>Weather:</strong> {{ entry.weather[0].description }}</p>
+                <p><strong>Humidity:</strong> {{ entry.main.humidity }}%</p>
+                <p><strong>Wind Speed:</strong> {{ entry.wind.speed }} m/s</p>
+            </div>
+        </div>
+
+        <h2>Weekly Forecast</h2>
+        <div class="horizontal-scroll">
+            <div ng-repeat="entry in week_weather" class="weather-card">
+                <h3>{{ formatDate(entry.dt_txt) }}</h3>
+                <p><strong>Time:</strong> {{ formatTime(entry.dt_txt) }}</p>
+                <p><strong>Temperature:</strong> {{ entry.main.temp }} °C</p>
+                <p><strong>Weather:</strong> {{ entry.weather[0].description }}</p>
+                <p><strong>Humidity:</strong> {{ entry.main.humidity }}%</p>
+                <p><strong>Wind Speed:</strong> {{ entry.wind.speed }} m/s</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var app = angular.module("MyApp", []);
+        app.controller("MyController", function ($scope, $http,$filter) {
+
+            $scope.getWeather = function () {
+                $scope.today_weather=[];
+                $scope.week_weather=[];
+                var currentDate = new Date();
+                $scope.c_date = currentDate;
+              $scope.k=false;
+                
+                localStorage.setItem("city" , $scope.city);
+      var today= $filter('date')(currentDate, "yyyy-MM-dd" )
+
+
+
+
+                var apiKey = "be6556beb3fd7b48045eee6cdb8c28e8"
+                var city = $scope.city
+                var url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`
+
+                $http.get(url).then(function (response) {
+                    $scope.Totalweather = response.data;
+                    response.data.list.forEach(function(entry){
+                            var entryDate= entry.dt_txt.split(" ")[0];
+                                         var entryHour=new Date(entry.dt_txt).getHours();
+                            if(entryDate==today)
+                            {
+                                $scope.today_weather.push(entry);
+                            }
+                          if(entryHour===12)
+                          {
+                            $scope.week_weather.push(entry);
+                          }
+                           
+
+                    })
+                }, function (error) {
+                    alert("City Not found");
+                })
+
+
+
+                    
+
+
+            }
+
+
+            var storedCity= localStorage.getItem("city");
+            if(storedCity)
+            {
+                $scope.city =storedCity;
+                $scope.getWeather();
+            }
+
+
+            $scope.formatTime=function(dateTime)
+            {
+                var date=new Date(dateTime);
+                return  $filter('date')(date,'h:mm a')
+            }
+            $scope.formatDate=function(dateString)
+            {
+                var date=new Date(dateString);
+                return $filter('date')(date, 'EEEE , dd-MM-yyyy')
+            }
+
+            $scope.getClosestData=function()
+            {
+                 var now= new Date();
+                 var currentHour=now.getHours();
+                 var closestEntry=null;
+                 var minDiff=Infinity;
+
+                 $scope.today_weather.forEach(function(entry){
+                          var entryTime=   new  Date(entry.dt_txt).getHours();
+                          var diff=Math.abs(currentHour-entryTime);
+
+                          if(diff< minDiff)
+                          {
+                             minDiff=diff;
+                             closestEntry=entry;
+                          }
+                 }) 
+                   $scope.closestWeather= closestEntry;
+                 return closestEntry;
+            }
+
+
+        })
+    </script>
+</body>
+
+</html>
