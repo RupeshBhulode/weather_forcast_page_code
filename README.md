@@ -42,7 +42,7 @@ Clone the repository:
 bash
 Copy
 Edit
-git clone https://github.com/your-username/weather-forecast-app.git
+git clone [https://github.com/your-username/weather-forecast-app.git](https://github.com/RupeshBhulode/weather_forcast_page_code.git)
 Navigate to the project directory.
 
 Open index.html in your web browser.
